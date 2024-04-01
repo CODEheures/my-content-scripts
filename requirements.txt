@@ -4,4 +4,6 @@
 
 azure-functions
 pandas
+numpy
 scikit-learn
+scikit-surprise
