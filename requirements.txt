@@ -5,5 +5,8 @@
 azure-functions
 pandas
 numpy
+matplotlib
 scikit-learn
 scikit-surprise
+pandarallel
+ipywidgets
