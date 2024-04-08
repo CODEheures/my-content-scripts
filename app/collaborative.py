@@ -59,7 +59,12 @@ class Collaborative():
         df = pd.read_pickle(self.df_path)
         return list(df.sample(10)['user_id'])
 
-    
+
+    def user_exist(self, user_id) -> bool:
+        df = pd.read_pickle(self.df_path)
+        return len(df.loc[df['user_id'] == user_id]['user_id'].unique()) == 1
+
+
     def recommand(self, user_id:int, verbose=True) -> list[int]:
         pandarallel.initialize(progress_bar=verbose)
 

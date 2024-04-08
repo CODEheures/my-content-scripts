@@ -1,5 +1,6 @@
 import azure.functions as func
 import logging
+from app.collaborative import Collaborative
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
@@ -7,19 +8,24 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 def recommand(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    name = req.params.get('name')
-    if not name:
+    user_id = req.params.get('userId')
+    
+    if user_id:
         try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
+            user_id = int(user_id)
+        except:
+            return func.HttpResponse(f"userId doit être un nombre entier")
+        collaborative = Collaborative()
+        if (collaborative.user_exist(user_id=user_id)):
+            recommandations = collaborative.recommand(user_id=user_id, verbose=False)
+            return func.HttpResponse(f"Les autres utilisateurs ont aussi aimé: {' '.join(map(str, recommandations))}.")
         else:
-            name = req_body.get('name')
-
-    if name:
-        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
+            return func.HttpResponse(
+             "Cet utilisateur n'existe pas",
+             status_code=404
+        )
     else:
         return func.HttpResponse(
-             "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-             status_code=200
+             "Merci d'ajouter un userId à votre requête ?userId=xxxx",
+             status_code=400
         )
