@@ -14,7 +14,7 @@ class Collaborative():
         self.model_path = f'{self.artifacts_path}/model_collaborative.pickle'
 
 
-    def aggregate_clicks(self, df_clicks: pd.DataFrame, max_clicks=None, n_users=None) -> pd.DataFrame:
+    def prepare_df(self, df_clicks: pd.DataFrame, max_clicks=None, n_users=None) -> pd.DataFrame:
         df = df_clicks.loc[:, ['user_id', 'click_article_id', 'session_id']]
         df = df.groupby(['user_id', 'click_article_id']).count()
         df.reset_index(inplace=True)
@@ -27,6 +27,7 @@ class Collaborative():
             np.random.seed(1234)
             full_users_list = df['user_id'].unique()
             random_users_list = np.random.choice(full_users_list, size=min(n_users, len(full_users_list)))
+            np.random.seed(None)
             df = df[df['user_id'].isin(random_users_list)]
 
         return df
@@ -39,25 +40,32 @@ class Collaborative():
         data = Dataset.load_from_df(df[["user_id", "article_id", "nb_clicks"]], reader)
         trainset, testset = train_test_split(data, test_size=0.3)
 
-        algo = SVD()
-        algo.fit(trainset=trainset)
+        model = SVD()
+        model.fit(trainset=trainset)
 
         if verbose:
-            predictions = algo.test(testset)
+            predictions = model.test(testset)
             accuracy.rmse(predictions)
 
         df.to_pickle(self.df_path)
-        pickle.dump(algo, open(self.model_path, 'wb'))
-        return algo
+        pickle.dump(model, open(self.model_path, 'wb'))
+        return model
     
     
     def predict(self, row, model):
         return model.predict(row.uid, row.iid)
 
 
-    def get_users(self) -> list[int]:
+    def get_users(self, nb_users=10) -> list[int]:
         df = pd.read_pickle(self.df_path)
-        return list(df.sample(10)['user_id'])
+        return list(df.sample(nb_users)['user_id'])
+    
+    
+    def get_user_articles(self, user_id: int, df: pd.DataFrame = None) -> list[int]:
+        if df is None:
+            df = pd.read_pickle(self.df_path)
+
+        return list(df.loc[df['user_id'] == user_id]['article_id'].unique())
 
 
     def user_exist(self, user_id) -> bool:
@@ -71,7 +79,7 @@ class Collaborative():
         df = pd.read_pickle(self.df_path)
         model = pickle.load(open(self.model_path, 'rb'))
 
-        user_articles = list(df.loc[df['user_id'] == user_id]['article_id'].unique())
+        user_articles = self.get_user_articles(user_id=user_id, df=df)
         not_viewed_article_ids = list(df.loc[~df['article_id'].isin(user_articles)]['article_id'].unique())
         results = pd.DataFrame([[user_id, article_id, 0] for article_id in not_viewed_article_ids], columns=['uid', 'iid', 'est'])
 
