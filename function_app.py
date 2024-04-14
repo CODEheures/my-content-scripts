@@ -3,6 +3,7 @@ import logging
 from app.collaborative import Collaborative
 from app.content_based import ContentBased
 from app.data import Data
+import json
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
@@ -17,10 +18,15 @@ def recommand(req: func.HttpRequest) -> func.HttpResponse:
         except:
             return func.HttpResponse(f"userId doit être un nombre entier")
         collaborative = Collaborative()
+        content_based = ContentBased()
         if (collaborative.user_exist(user_id=user_id)):
             logging.info(f'Calcul recommandations pour le user {user_id}')
-            recommandations = collaborative.recommand(user_id=user_id, verbose=False)
-            return func.HttpResponse(f"Les autres utilisateurs ont aussi aimé: {' '.join(map(str, recommandations))}.")
+            recommandations_collaborative = collaborative.recommand(user_id=user_id, verbose=False)
+            recommandations_content_based = content_based.recommand(user_id=user_id, verbose=False)
+            return func.HttpResponse(
+                        json.dumps({'collaborative': recommandations_collaborative, 'content_based': recommandations_content_based}),
+                        mimetype="application/json",
+                 )
         else:
             return func.HttpResponse(
              "Cet utilisateur n'existe pas",
