@@ -24,7 +24,7 @@ def recommand(req: func.HttpRequest) -> func.HttpResponse:
             recommandations_collaborative = collaborative.recommand(user_id=user_id, verbose=False)
             recommandations_content_based = content_based.recommand(user_id=user_id, verbose=False)
             return func.HttpResponse(
-                        json.dumps({'collaborative': recommandations_collaborative, 'content_based': recommandations_content_based}),
+                        json.dumps({'collaborative': [str(x) for x in recommandations_collaborative], 'content_based': [str(x) for x in recommandations_content_based]}),
                         mimetype="application/json",
                  )
         else:
@@ -59,7 +59,7 @@ def train_collaborative(req: func.HttpRequest) -> func.HttpResponse:
         )
 
 @app.route(route="train/content-based", methods=["GET"])
-def train_collaborative(req: func.HttpRequest) -> func.HttpResponse:
+def train_content_based(req: func.HttpRequest) -> func.HttpResponse:
     
     logging.info(f'Entrainement modèle content based demandé')
     data = Data()

@@ -48,7 +48,7 @@ class ContentBased():
         return df
     
     
-    def train(self, df: pd.DataFrame, chunck_size=500, verbose=False) -> None
+    def train(self, df: pd.DataFrame, chunck_size=500, verbose=False) -> None:
         # see https://heartbeat.comet.ml/recommender-systems-with-python-part-i-content-based-filtering-5df4940bd831
         # We must chunk train because matrix of cosine similarities may cause memory overflow up to 600Gb!
         
@@ -111,7 +111,7 @@ class ContentBased():
         df_similarities = df_similarities[~df_similarities['item_id'].isin(user_articles)]
 
         # Sort top 5 articles by similarity score
-        top_recommand = df_similarities.sort_values(by='similarity', ascending=False)[0:content_similarities.shape[1]]['item_id'].to_list()
+        top_recommand = list(df_similarities.sort_values(by='similarity', ascending=False)['item_id'].unique()[0:content_similarities.shape[1]])
         
         if verbose:
             print(f"Current user articles: {', '.join(map(str, user_articles))}")
