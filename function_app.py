@@ -4,10 +4,25 @@ from app.collaborative import Collaborative
 from app.content_based import ContentBased
 from app.data import Data
 import json
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
+env = Environment(
+    loader=FileSystemLoader("templates"),
+    autoescape=select_autoescape()
+)
 
-@app.route(route="recommand", methods=["GET"])
+@app.route(route="/", methods=["GET"])
+def home(req: func.HttpRequest) -> func.HttpResponse:
+    template = env.get_template("home.html")
+    html = template.render(name="sylvain")
+    return func.HttpResponse(
+                        html,
+                        mimetype="text/html",
+                 )
+
+
+@app.route(route="api/recommand", methods=["GET"])
 def recommand(req: func.HttpRequest) -> func.HttpResponse:
 
     user_id = req.params.get('userId')
@@ -38,9 +53,21 @@ def recommand(req: func.HttpRequest) -> func.HttpResponse:
              status_code=400
         )
     
-@app.route(route="train/collaborative", methods=["GET"])
-def train_collaborative(req: func.HttpRequest) -> func.HttpResponse:
-    
+@app.route(route="api/train/collaborative", methods=["GET"])
+def train_collaborative_http(req: func.HttpRequest) -> func.HttpResponse:
+    train_collaborative()
+    return func.HttpResponse(
+             "Entrainement du model collaborative terminé",
+             status_code=200
+        )
+
+@app.timer_trigger(schedule="0 0 0 * * *", 
+              arg_name="mytimer",
+              run_on_startup=False) 
+def train_collaborative(mytimer: func.TimerRequest) -> None:
+    train_collaborative()
+
+def train_collaborative() -> None:
     logging.info(f'Entrainement modèle collaboratif demandé')
     data = Data()
     collaborative = Collaborative()
@@ -52,15 +79,25 @@ def train_collaborative(req: func.HttpRequest) -> func.HttpResponse:
     
     logging.info(f'Entrainement en cours...')
     model = collaborative.train(sample_df, verbose=False)
+    return
     
+
+@app.route(route="api/train/content-based", methods=["GET"])
+def train_content_based_http(req: func.HttpRequest) -> func.HttpResponse:
+    train_content_based()
     return func.HttpResponse(
-             "Entrainement du model collaborative terminé",
+             "Entrainement du model content based terminé",
              status_code=200
         )
 
-@app.route(route="train/content-based", methods=["GET"])
-def train_content_based(req: func.HttpRequest) -> func.HttpResponse:
-    
+@app.timer_trigger(schedule="0 0 0 * * *", 
+              arg_name="mytimer",
+              run_on_startup=False) 
+def train_content_based_timer(mytimer: func.TimerRequest) -> None:
+    train_content_based()
+
+
+def train_content_based() -> None:
     logging.info(f'Entrainement modèle content based demandé')
     data = Data()
     content_based = ContentBased()
@@ -75,8 +112,4 @@ def train_content_based(req: func.HttpRequest) -> func.HttpResponse:
     
     logging.info(f'Entrainement en cours...')
     results = content_based.train(df=df, chunck_size=500)
-    
-    return func.HttpResponse(
-             "Entrainement du model content based terminé",
-             status_code=200
-        )
+        
