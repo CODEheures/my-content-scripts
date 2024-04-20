@@ -14,8 +14,10 @@ env = Environment(
 
 @app.route(route="/", methods=["GET"])
 def home(req: func.HttpRequest) -> func.HttpResponse:
+    collaborative = Collaborative()
+    users = collaborative.get_users(nb_users=30)
     template = env.get_template("home.html")
-    html = template.render(name="sylvain")
+    html = template.render(users=users)
     return func.HttpResponse(
                         html,
                         mimetype="text/html",
@@ -36,10 +38,12 @@ def recommand(req: func.HttpRequest) -> func.HttpResponse:
         content_based = ContentBased()
         if (collaborative.user_exist(user_id=user_id)):
             logging.info(f'Calcul recommandations pour le user {user_id}')
+
+            viewed = collaborative.get_user_articles(user_id=user_id)
             recommandations_collaborative = collaborative.recommand(user_id=user_id, verbose=False)
             recommandations_content_based = content_based.recommand(user_id=user_id, verbose=False)
             return func.HttpResponse(
-                        json.dumps({'collaborative': [str(x) for x in recommandations_collaborative], 'content_based': [str(x) for x in recommandations_content_based]}),
+                        json.dumps({'viewed': [int(x) for x in viewed], 'collaborative': [int(x) for x in recommandations_collaborative], 'content_based': [int(x) for x in recommandations_content_based]}),
                         mimetype="application/json",
                  )
         else:
@@ -65,7 +69,7 @@ def train_collaborative_http(req: func.HttpRequest) -> func.HttpResponse:
               arg_name="mytimer",
               run_on_startup=False) 
 def train_collaborative(mytimer: func.TimerRequest) -> None:
-    train_collaborative()
+    train_collaborative(True)
 
 def train_collaborative() -> None:
     logging.info(f'Entrainement modèle collaboratif demandé')
@@ -78,7 +82,9 @@ def train_collaborative() -> None:
     sample_df = collaborative.prepare_df(df_clicks=df_clicks, max_clicks=5, n_users=sample_users_size)
     
     logging.info(f'Entrainement en cours...')
-    model = collaborative.train(sample_df, verbose=False)
+
+    # Train require lot f resources, this line is volontary commented
+    # model = collaborative.train(sample_df, verbose=False)
     return
     
 
@@ -101,15 +107,16 @@ def train_content_based() -> None:
     logging.info(f'Entrainement modèle content based demandé')
     data = Data()
     content_based = ContentBased()
-    sample = 20000
     
     logging.info(f'Lecture des fichiers meta data et embeddings en cours...')
     df_meta_data = data.read_articles_meta_data()
     df_embeddings = data.read_embeddings()
 
     logging.info(f'Preparation du dataframe...')
-    df = content_based.prepare_df(df_meta_data=df_meta_data, df_embeddings=df_embeddings, n_components=43, sample=sample)
-    
-    logging.info(f'Entrainement en cours...')
-    results = content_based.train(df=df, chunck_size=500)
+    df = content_based.prepare_df(df_meta_data=df_meta_data, df_embeddings=df_embeddings, n_components=43)
         
+    logging.info(f'Entrainement en cours...')
+
+    # Train require lot of resource, this line is volontary commented
+    # results = content_based.train(df=df, chunck_size=500)
+    return

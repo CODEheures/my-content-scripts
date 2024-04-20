@@ -1,9 +1,143 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>HELLO {{name}}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>MyContent</title>
+	<meta name="author" content="Sylvain Gagnot">
+    <meta name="description" content="My content permet d'obtenir des recommandations">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        .body-bg {
+            background-color: #9921e8;
+            background-image: linear-gradient(315deg, #9921e8 0%, #5f72be 74%);
+        }
+    </style>
 </head>
-<body>
-    <h1>Hello {{name}}</h1>
+<body class="body-bg min-h-screen pt-12 md:pt-20 pb-6 px-2 md:px-0" style="font-family:'Lato',sans-serif;">
+    <header class="max-w-lg mx-auto">
+        <a href="#" class="flex justify-center">
+            <h1 class="text-4xl font-bold text-white text-center mr-4">MyContent</h1>
+            {% include 'logo.html' %}
+        </a>
+    </header>
+
+    <main>
+        <div class="bg-white max-w-lg mx-auto p-8 md:p-12 my-10 rounded-lg shadow-2xl">
+            <section>
+                <h3 class="font-bold text-2xl">Recommandations d'articles</h3>
+                <p class="text-gray-600 pt-2">Choisir un utilisateur pour obtenir ses recommandations.</p>
+            </section>
+    
+            <section class="mt-10">
+                <form class="flex flex-col" onsubmit="event.preventDefault(); getResults()">
+                    <div class="mb-6 pt-3 rounded bg-gray-200">
+                        <label class="block text-gray-700 text-sm font-bold mb-2 ml-3" for="user">Utilisateur</label>
+                        <select id="user" name="user" class="bg-gray-200 rounded w-full text-gray-700 focus:outline-none border-b-4 border-gray-300 focus:border-purple-600 transition duration-500 px-3 pb-3">
+                            <option disabled selected value> -- choisir un utilisateur -- </option>
+                            {% for user in users %}
+                            <option>{{ user }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded shadow-lg hover:shadow-xl transition duration-200" type="submit">
+                        <svg id="btn-loader" style="display: none;" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        Recommander
+                    </button>
+                </form>
+            </section>   
+        </div>
+        <div id="section-results" style="display: none;" class="bg-white max-w-5xl mx-auto p-8 md:p-12 my-10 rounded-lg shadow-2xl">
+            <section class="grid-col-2 gap-4">
+                <table class="w-full border border-collapse border-slate-400">
+                    <tr>
+                        <td class="p-4 max-w-48 border border-slate-300 bg-gray-50 font-semibold align-text-top text-right">Recommandations basées sur le contenu</td>
+                        <td class="p-4 border border-slate-300">
+                            <div id="list1" class="grid grid-cols-5 gap-4"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-4 max-w-48 border border-slate-300 bg-gray-50 font-semibold align-text-top text-right">Recommandations basées sur les autres utilisateurs</td>
+                        <td class="p-4 border border-slate-300">
+                            <div id="list2" class="grid grid-cols-5 gap-4"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-4 max-w-48 border border-slate-300 bg-gray-50 font-semibold align-text-top text-right">Articles déjà vus</td>
+                        <td class="p-4 border border-slate-300">
+                            <div id="list3" class="grid grid-cols-5 gap-4"></div>
+                        </td>
+                    </tr>
+                </table>
+            </section>
+        </div>
+    </main>
+
+    <div class="max-w-lg mx-auto text-center mt-12 mb-6">
+        <p class="text-white">Code cette page ici:<br> <a href="https://github.com/CODEheures/my-content-scripts" class="font-bold hover:underline">https://github.com/CODEheures/my-content-scripts</a>.</p>
+    </div>
+
+    <footer class="max-w-lg mx-auto flex justify-center text-white">
+        <a href="#" class="hover:underline">Sylvain Gagnot</a>
+        <span class="mx-3">•</span>
+        <a href="#" class="hover:underline">Avril 2024</a>
+    </footer>
+    <script type="text/javascript">
+        async function getResults() {
+            const user = document.getElementById('user')
+            const id = user.value
+        
+            if (isNaN(parseInt(id)))
+            {
+                return
+            }
+
+            document.getElementById('section-results').style.display = 'none'
+            document.getElementById('btn-loader').style.display = null
+
+            const list1 = document.getElementById('list1')
+            const list2 = document.getElementById('list2')
+            const list3 = document.getElementById('list3')
+
+            const response = await fetch('./api/recommand?userId=' + id)
+            const results = await response.json()
+
+            for (const content_based of results.content_based)
+            {
+                const div = document.createElement('div')
+                div.innerText = content_based
+                div.classList.add('border',  'border-violet-800',  'bg-violet-400', 'text-center', 'rounded-xl')
+                list1.append(div)
+            }
+
+            for (const collaborative of results.collaborative)
+            {
+                const div = document.createElement('div')
+                div.innerText = collaborative
+                div.classList.add('border',  'border-violet-800',  'bg-violet-400', 'text-center', 'rounded-xl')
+                list2.append(div)
+            }
+
+            for (const viewed of results.viewed)
+            {
+                const div = document.createElement('div')
+                div.innerText = viewed
+                div.classList.add('border',  'border-violet-800',  'bg-violet-400', 'text-center', 'rounded-xl')
+                list3.append(div)
+            }
+
+            // list1.innerText = results.viewed.join(', ')
+            // list2.innerText = results.content_based.join(', ')
+            // list3.innerText = results.collaborative.join(', ')
+        
+            document.getElementById('section-results').style.display = null
+            document.getElementById('btn-loader').style.display = 'none'
+        }
+    </script>
 </body>
 </html>

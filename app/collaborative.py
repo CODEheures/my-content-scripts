@@ -89,7 +89,7 @@ class Collaborative():
 
         results.sort_values(by='est', ascending=False, inplace=True, ignore_index=True)
 
-        top_recommand = list(results['iid'].unique()[0:4])
+        top_recommand = list(results['iid'].unique()[0:5])
         
         if verbose:
             print(f"Current user articles: {', '.join(map(str, user_articles))}")
