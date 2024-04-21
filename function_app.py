@@ -113,11 +113,7 @@ def train_content_based() -> None:
     df_embeddings = data.read_embeddings()
 
     logging.info(f'Preparation du dataframe...')
-    try:
-        df = content_based.prepare_df(df_meta_data=df_meta_data, df_embeddings=df_embeddings, n_components=43)
-    except Exception as inst:
-        logging.error(inst)
-
+    df = content_based.prepare_df(df_meta_data=df_meta_data, df_embeddings=df_embeddings, n_components=43)
         
     logging.info(f'Entrainement en cours...')
 
