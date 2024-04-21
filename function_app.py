@@ -68,8 +68,8 @@ def train_collaborative_http(req: func.HttpRequest) -> func.HttpResponse:
 @app.timer_trigger(schedule="0 0 0 * * *", 
               arg_name="mytimer",
               run_on_startup=False) 
-def train_collaborative(mytimer: func.TimerRequest) -> None:
-    train_collaborative(True)
+def train_collaborative_timer(mytimer: func.TimerRequest) -> None:
+    train_collaborative()
 
 def train_collaborative() -> None:
     logging.info(f'Entrainement modèle collaboratif demandé')
@@ -113,7 +113,11 @@ def train_content_based() -> None:
     df_embeddings = data.read_embeddings()
 
     logging.info(f'Preparation du dataframe...')
-    df = content_based.prepare_df(df_meta_data=df_meta_data, df_embeddings=df_embeddings, n_components=43)
+    try:
+        df = content_based.prepare_df(df_meta_data=df_meta_data, df_embeddings=df_embeddings, n_components=43)
+    except Exception as inst:
+        logging.error(inst)
+
         
     logging.info(f'Entrainement en cours...')
 
