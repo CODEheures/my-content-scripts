@@ -85,6 +85,8 @@ def train_collaborative() -> None:
     
     logging.info(f'Entrainement en cours...')
     # model = collaborative.train(sample_df, verbose=False)
+
+    logging.info(f'Fin de l\'entrainement!')
     return
     
 
@@ -119,4 +121,6 @@ def train_content_based() -> None:
         
     logging.info(f'Entrainement en cours...')
     # results = content_based.train(df=df, chunck_size=500)
+
+    logging.info(f'Fin de l\'entrainement!')
     return
