@@ -9,5 +9,4 @@ matplotlib
 scikit-learn
 scikit-surprise
 pandarallel
-ipywidgets
 Jinja2
