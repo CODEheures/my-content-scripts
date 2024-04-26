@@ -10,3 +10,6 @@ scikit-learn
 scikit-surprise
 pandarallel
 Jinja2
+
+# Only for local notebook, not for azure function
+# ipywidgets
