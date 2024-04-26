@@ -14,6 +14,8 @@ env = Environment(
 
 @app.route(route="/", methods=["GET"])
 def home(req: func.HttpRequest) -> func.HttpResponse:
+    """Route pour afficher une page web permettant de selection un user et d'obtenir des recommandations
+    """
     collaborative = Collaborative()
     users = collaborative.get_users(nb_users=30)
     template = env.get_template("home.html")
@@ -26,7 +28,8 @@ def home(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="api/recommand", methods=["GET"])
 def recommand(req: func.HttpRequest) -> func.HttpResponse:
-
+    """Route API pour une recommandation
+    """
     user_id = req.params.get('userId')
     
     if user_id:
@@ -59,6 +62,8 @@ def recommand(req: func.HttpRequest) -> func.HttpResponse:
     
 @app.route(route="api/train/collaborative", methods=["GET"])
 def train_collaborative_http(req: func.HttpRequest) -> func.HttpResponse:
+    """Route API pour lancer un entrainemennt collaboratif
+    """
     train_collaborative()
     return func.HttpResponse(
              "Entrainement du model collaborative terminé",
@@ -69,10 +74,14 @@ def train_collaborative_http(req: func.HttpRequest) -> func.HttpResponse:
               arg_name="mytimer",
               run_on_startup=False) 
 def train_collaborative_timer(mytimer: func.TimerRequest) -> None:
+    """Trigger Timer pour lancer un entrainemennt collaboratif
+    """
     train_collaborative()
 
 def train_collaborative() -> None:
-    # Train require lot f resources, this lines is volontary commented
+    """Lancer un entrainement collaboratif
+       Train require lot of resources, code lines is volontary commented
+    """
 
     logging.info(f'Entrainement modèle collaboratif demandé')
     # data = Data()
@@ -92,6 +101,8 @@ def train_collaborative() -> None:
 
 @app.route(route="api/train/content-based", methods=["GET"])
 def train_content_based_http(req: func.HttpRequest) -> func.HttpResponse:
+    """Route API pour lancer un entrainemennt content based
+    """
     train_content_based()
     return func.HttpResponse(
              "Entrainement du model content based terminé",
@@ -102,11 +113,15 @@ def train_content_based_http(req: func.HttpRequest) -> func.HttpResponse:
               arg_name="mytimer",
               run_on_startup=False) 
 def train_content_based_timer(mytimer: func.TimerRequest) -> None:
+    """Trgigger timer pour lancer un entrainemennt content based
+    """
     train_content_based()
 
 
 def train_content_based() -> None:
-    # Train require lot of resource, this lines is volontary commented
+    """Lancer un entrainement content based
+       Train require lot of resources, code lines is volontary commented
+    """
 
     logging.info(f'Entrainement modèle content based demandé')
     # data = Data()

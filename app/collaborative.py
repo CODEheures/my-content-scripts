@@ -7,7 +7,8 @@ from pandarallel import pandarallel
 
 
 class Collaborative():
-
+    """Class pour préparer les données, entrainer le model et prédire des recommandations collaboratives
+    """
     def __init__(self, artifact_path='artifacts') -> None:
         self.artifacts_path = artifact_path
         self.df_path = f'{self.artifacts_path}/df_collaborative.pickle'
@@ -15,6 +16,17 @@ class Collaborative():
 
 
     def prepare_df(self, df_clicks: pd.DataFrame, max_clicks=None, n_users=None) -> pd.DataFrame:
+        """Préparation du DataFrame d'entrainement depuis le dataframe des clicks 
+           (voir class Data pour obtenir df_click)
+
+        Args:
+            df_clicks (pd.DataFrame): Dataframe des clicks obtenu par la class Data
+            max_clicks (int, optional): Nombre de click à partir duquel le rating est maxi. Defaults to None.
+            n_users (int, optional): Nombre de users maxi pour limiter l'entrainement. Defaults to None.
+
+        Returns:
+            pd.DataFrame: Dataframe prêt pour la fonction d'entrainement
+        """
         df = df_clicks.loc[:, ['user_id', 'click_article_id', 'session_id']]
         df = df.groupby(['user_id', 'click_article_id']).count()
         df.reset_index(inplace=True)
@@ -34,7 +46,16 @@ class Collaborative():
     
     
     def train(self, df: pd.DataFrame, rating_scale=(1,5), verbose=False) -> SVD:
+        """Entrainement du model
 
+        Args:
+            df (pd.DataFrame): Dataframe préparé par la fonction prepare_df
+            rating_scale (tuple, optional): Note mini-maxi. Defaults to (1,5).
+            verbose (bool, optional): Pour avoir des retour terminal. Defaults to False.
+
+        Returns:
+            SVD: Model collaboratif
+        """
         reader = Reader(rating_scale=rating_scale)
 
         data = Dataset.load_from_df(df[["user_id", "article_id", "nb_clicks"]], reader)
@@ -53,15 +74,35 @@ class Collaborative():
     
     
     def predict(self, row, model):
+        """Prédiction sur le model obtenu depuis la fonction train
+           Invoquée depuis la fonction recommand
+        """
         return model.predict(row.uid, row.iid)
 
 
     def get_users(self, nb_users=10) -> list[int]:
+        """Obtenir une liste de users entrainés
+
+        Args:
+            nb_users (int, optional): Nombre de users. Defaults to 10.
+
+        Returns:
+            list[int]: Liste des users
+        """
         df = pd.read_pickle(self.df_path)
         return list(df.sample(nb_users)['user_id'])
     
     
     def get_user_articles(self, user_id: int, df: pd.DataFrame = None) -> list[int]:
+        """Obtenir la liste des articles d'un user
+
+        Args:
+            user_id (int): User id
+            df (pd.DataFrame, optional): Dataframe ayant servi à l'entrainement du model. Defaults to None.
+
+        Returns:
+            list[int]: Liste des articles
+        """
         if df is None:
             df = pd.read_pickle(self.df_path)
 
@@ -69,11 +110,28 @@ class Collaborative():
 
 
     def user_exist(self, user_id) -> bool:
+        """Defini si un user existe dans le dataframe d'entrainement
+
+        Args:
+            user_id (int): User Id à tester
+
+        Returns:
+            bool: True si le user a été entrainé
+        """
         df = pd.read_pickle(self.df_path)
         return len(df.loc[df['user_id'] == user_id]['user_id'].unique()) == 1
 
 
     def recommand(self, user_id:int, verbose=True) -> list[int]:
+        """Obtenir une liste de recommadations collaborative pour un user
+
+        Args:
+            user_id (int): Id du user à recommander
+            verbose (bool, optional): Obtenir des retour en terminal. Defaults to True.
+
+        Returns:
+            list[int]: Liste recommandée
+        """
         pandarallel.initialize(progress_bar=verbose)
 
         df = pd.read_pickle(self.df_path)

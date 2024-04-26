@@ -7,6 +7,8 @@ from app.collaborative import Collaborative
 
 
 class ContentBased():
+    """Class pour préparer les données, entrainer le model et prédire des recommandations content based
+    """
 
     def __init__(self, artifact_path='artifacts', top_count=5) -> None:
         self.artifacts_path = artifact_path
@@ -15,7 +17,19 @@ class ContentBased():
 
 
     def prepare_df(self, df_meta_data: pd.DataFrame, df_embeddings: pd.DataFrame, n_components=None, sample=None, verbose=False) -> pd.DataFrame:
-        
+        """Préparation du DataFrame d'entrainement depuis le dataframe des embeddings 
+           (voir class Data pour obtenir df_meta_data et df_embeddings)
+
+        Args:
+            df_meta_data (pd.DataFrame): Dataframe des meta data
+            df_embeddings (pd.DataFrame): Dataframe des embeddings
+            n_components (int, optional): Nombre de composantes de la PCA. Defaults to None.
+            sample (int, optional): Nombre d'embedding à garder. Defaults to None.
+            verbose (bool, optional): Pour avoir des retours en terminal. Defaults to False.
+
+        Returns:
+            pd.DataFrame: Dataframe préparé pour la fonction train
+        """
         # Concat meta data with embeddings
         df_embeddings.columns = df_embeddings.columns.astype(str)
         df = pd.concat([df_meta_data, df_embeddings], axis=1)
@@ -43,12 +57,22 @@ class ContentBased():
                 for i in [0.8, 0.9, 0.95]:
                     args_where = np.argwhere(np.array(cum_sum)>i)
                     if len(args_where) > 0:
-                        print(f'{i*100}% atteint à {args_where[0][0]}')
+                        print(f'{i*100}% de variance exprimée avec {args_where[0][0]} composantes')
 
         return df
     
     
-    def train(self, df: pd.DataFrame, chunck_size=500, verbose=False) -> None:
+    def train(self, df: pd.DataFrame, chunck_size=500, verbose=False) -> np.ndarray:
+        """Entrainement du modèle content based
+
+        Args:
+            df (pd.DataFrame): Dataframe préparé par la fonction prepare_df
+            chunck_size (int, optional): Découper l'entrainement par x embeddings. Defaults to 500.
+            verbose (bool, optional): Pour avoir des retour en terminal. Defaults to False.
+
+        Returns:
+            np.ndarray : Matrice de similarité. Chaque ligne (article) renvoi 5 colonnes qui chacune contient l'index/score de l'article similaire
+        """
         # see https://heartbeat.comet.ml/recommender-systems-with-python-part-i-content-based-filtering-5df4940bd831
         # We must chunk train because matrix of cosine similarities may cause memory overflow up to 600Gb!
         
@@ -92,6 +116,15 @@ class ContentBased():
     
 
     def recommand(self, user_id:int, verbose=True) -> list[int]:
+        """Fonction de recommandation content based pour un user
+
+        Args:
+            user_id (int): Id du user à recommander
+            verbose (bool, optional): Pour avoir des infos en terminal. Defaults to True.
+
+        Returns:
+            list[int]: Liste de recommandation
+        """
 
         # Get user articles
         collaborative = Collaborative()

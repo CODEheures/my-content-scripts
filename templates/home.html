@@ -104,6 +104,10 @@
             const list2 = document.getElementById('list2')
             const list3 = document.getElementById('list3')
 
+            list1.innerHTML = ''
+            list2.innerHTML = ''
+            list3.innerHTML = ''
+
             const response = await fetch('./api/recommand?userId=' + id)
             const results = await response.json()
 
